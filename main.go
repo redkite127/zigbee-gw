@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
@@ -63,7 +64,7 @@ type Redirection struct {
 }
 
 var registeredRedirection map[string]Redirection = map[string]Redirection{
-	"abcdefghij": {
+	"0013a20041531c31": {
 		Scheme: "http",
 		Host:   "localhost",
 		Port:   1234,
@@ -147,12 +148,16 @@ func readSerial(fc chan<- XBeeFrame) {
 }
 
 func processFrames(fc <-chan XBeeFrame) {
+	var err error
 	for f := range fc {
 		switch f.Type {
 		case FrameTypeReceivePacket:
-			processReceivePacketFrame(f)
+			err = processReceivePacketFrame(f)
 		default:
 			log.Printf("Unsupported frame type: %X\n", f.Type)
+		}
+		if err != nil {
+			log.Println(err)
 		}
 		log.Println("==============================================================")
 	}
@@ -172,7 +177,7 @@ func processReceivePacketFrame(f XBeeFrame) error {
 	log.Printf("RF data: % X", rfd)
 	log.Printf("RF data (string): %s", rfd)
 
-	r, found := registeredRedirection[string(sa64)]
+	r, found := registeredRedirection[hex.EncodeToString(sa64)]
 	if !found {
 		return errors.New("Received packet from unregistered device!")
 	}
