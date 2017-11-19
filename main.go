@@ -6,8 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	"github.com/tarm/serial"
@@ -49,6 +52,28 @@ type XBeeFrame struct {
 	Type     FrameTypes
 	Data     []byte
 	Checksum byte
+}
+
+type Redirection struct {
+	Scheme     string
+	Host       string
+	Port       int
+	Path       string
+	Parameters url.Values
+}
+
+var registeredRedirection map[string]Redirection = map[string]Redirection{
+	"abcdefghij": {
+		Scheme: "http",
+		Host:   "localhost",
+		Port:   1234,
+		Path:   "sensors",
+		Parameters: url.Values{
+			"name": {"cave_temperature_humidity_1"},
+			"room": {"cave"},
+			"type": {"temperature;humidity"},
+		},
+	},
 }
 
 func readSerial(fc chan<- XBeeFrame) {
@@ -134,10 +159,6 @@ func processFrames(fc <-chan XBeeFrame) {
 }
 
 func processReceivePacketFrame(f XBeeFrame) error {
-	if f.Type != FrameTypeReceivePacket {
-		return errors.New("Wrong frame type")
-	}
-
 	sa64 := f.Data[:8]
 	log.Printf("64-bit source address: % X", sa64)
 
@@ -151,9 +172,28 @@ func processReceivePacketFrame(f XBeeFrame) error {
 	log.Printf("RF data: % X", rfd)
 	log.Printf("RF data (string): %s", rfd)
 
-	//get source address
-	//get pattern
-	//send to registered destination
+	r, found := registeredRedirection[string(sa64)]
+	if !found {
+		return errors.New("Received packet from unregistered device!")
+	}
+
+	u := url.URL{
+		Scheme:   r.Scheme,
+		Host:     r.Host + ":" + strconv.Itoa(r.Port),
+		Path:     r.Path,
+		RawQuery: r.Parameters.Encode(),
+	}
+
+	if resp, err := http.Post(u.String(), "text/plain", bytes.NewReader(rfd)); err != nil || resp.StatusCode < 200 || resp.StatusCode > 299 {
+		var msg string
+		if err != nil {
+			msg = err.Error()
+		} else {
+			msg = resp.Status
+		}
+
+		return errors.New("Failed to redirect data to destination: " + msg)
+	}
 
 	return nil
 }
