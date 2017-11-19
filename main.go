@@ -121,12 +121,15 @@ func readSerial(fc chan<- XBeeFrame) {
 	}
 }
 
-func processFrame(f XBeeFrame) {
-	switch f.Type {
-	case FrameTypeReceivePacket:
-		processReceivePacketFrame(f)
-	default:
-		log.Printf("Unsupported frame type: %X\n", f.Type)
+func processFrames(fc <-chan XBeeFrame) {
+	for f := range fc {
+		switch f.Type {
+		case FrameTypeReceivePacket:
+			processReceivePacketFrame(f)
+		default:
+			log.Printf("Unsupported frame type: %X\n", f.Type)
+		}
+		log.Println("==============================================================")
 	}
 }
 
@@ -148,6 +151,10 @@ func processReceivePacketFrame(f XBeeFrame) error {
 	log.Printf("RF data: % X", rfd)
 	log.Printf("RF data (string): %s", rfd)
 
+	//get source address
+	//get pattern
+	//send to registered destination
+
 	return nil
 }
 
@@ -164,10 +171,5 @@ func main() {
 	}()
 
 	go readSerial(frameChan /*, stopChan*/)
-
-	for f := range frameChan {
-		//fmt.Printf("% X", frame.Data)
-		processFrame(f)
-		log.Println("==============================================================")
-	}
+	processFrames(frameChan)
 }
