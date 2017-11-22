@@ -66,11 +66,11 @@ type Redirection struct {
 var registeredRedirection map[string]Redirection = map[string]Redirection{
 	"0013a20041531c31": {
 		Scheme: "http",
-		Host:   "localhost",
-		Port:   1234,
+		Host:   "10.161.0.130",
+		Port:   2001,
 		Path:   "sensors",
 		Parameters: url.Values{
-			"name": {"cave_temperature_humidity_1"},
+			//"name": {"cave_temperature_humidity_1"},
 			"room": {"cave"},
 			"type": {"temperature;humidity"},
 		},
