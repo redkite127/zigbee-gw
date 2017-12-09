@@ -4,16 +4,14 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
-	"errors"
 	"fmt"
-	"log"
-	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/tarm/serial"
 )
 
@@ -61,20 +59,6 @@ type Redirection struct {
 	Port       int
 	Path       string
 	Parameters url.Values
-}
-
-var registeredRedirection map[string]Redirection = map[string]Redirection{
-	"0013a20041531c31": {
-		Scheme: "http",
-		Host:   "10.161.0.130",
-		Port:   2001,
-		Path:   "sensors",
-		Parameters: url.Values{
-			//"name": {"cave_temperature_humidity_1"},
-			"room": {"cave"},
-			"type": {"temperature;humidity"},
-		},
-	},
 }
 
 func readSerial(fc chan<- XBeeFrame) {
@@ -141,8 +125,8 @@ func readSerial(fc chan<- XBeeFrame) {
 		case FrameChecksum:
 			frame.Checksum = b
 			//log.Printf("Frame checksum: %X\n", frame.Checksum)
-
 			fc <- frame
+			frame.State = FrameStart
 		}
 	}
 }
@@ -177,35 +161,37 @@ func processReceivePacketFrame(f XBeeFrame) error {
 	log.Printf("RF data: % X", rfd)
 	log.Printf("RF data (string): %s", rfd)
 
-	r, found := registeredRedirection[hex.EncodeToString(sa64)]
-	if !found {
-		return errors.New("Received packet from unregistered device!")
-	}
-
-	u := url.URL{
-		Scheme:   r.Scheme,
-		Host:     r.Host + ":" + strconv.Itoa(r.Port),
-		Path:     r.Path,
-		RawQuery: r.Parameters.Encode(),
-	}
-
-	if resp, err := http.Post(u.String(), "text/plain", bytes.NewReader(rfd)); err != nil || resp.StatusCode < 200 || resp.StatusCode > 299 {
-		var msg string
-		if err != nil {
-			msg = err.Error()
-		} else {
-			msg = resp.Status
-		}
-
-		return errors.New("Failed to redirect data to destination: " + msg)
+	if err := redirect(hex.EncodeToString(sa64), rfd); err != nil {
+		return err
 	}
 
 	return nil
 }
 
+func init() {
+	viper.SetConfigName("config")
+
+	//TODO What about giving an argument on startup for specifying config-dir?
+	viper.AddConfigPath("/opt/zigbee-gw/etc")
+	viper.AddConfigPath("./etc")
+	viper.AddConfigPath(".")
+	viper.AddConfigPath("../etc")
+
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalln(err)
+	}
+	log.Infoln("Using config:", viper.ConfigFileUsed())
+
+	registeredRedirections = viper.Get("redirections").(map[string]interface{})
+	for k, v := range registeredRedirections {
+		log.Infoln("New redirection:", k, v)
+	}
+}
+
 func main() {
 	//stopChan := make(chan interface{})
 	frameChan := make(chan XBeeFrame)
+
 	var gracefulStop = make(chan os.Signal)
 	signal.Notify(gracefulStop, syscall.SIGTERM)
 	signal.Notify(gracefulStop, syscall.SIGINT)
