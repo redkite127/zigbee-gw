@@ -1,141 +1,22 @@
 package main
 
 import (
-	"bytes"
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/redkite1/zigbee-gw/src/xbee"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/tarm/serial"
 )
 
-type FrameStates int
-
-const (
-	FrameStart    = FrameStates(0)
-	FrameLength   = FrameStart + 1
-	FrameType     = FrameLength + 1
-	FrameData     = FrameType + 1
-	FrameChecksum = FrameData + 1
-)
-
-type FrameTypes uint8
-
-const (
-	// https://www.digi.com/resources/documentation/Digidocs/90001942-13/#reference/r_supported_frames_zigbee.htm?Highlight=receive packet
-	FrameTypeATCommandResponse              = FrameTypes(0x88)
-	FrameTypeModemStatus                    = FrameTypes(0x8A)
-	FrameTypeTransmitStatus                 = FrameTypes(0x88)
-	FrameTypeReceivePacket                  = FrameTypes(0x90)
-	FrameTypeExplicitRxIndicator            = FrameTypes(0x91)
-	FrameTypeIODataSampleRxIndicator        = FrameTypes(0x92)
-	FrameTypeXBeeSensorReadIndicator        = FrameTypes(0x94)
-	FrameTypeNodeIdentificationIndicator    = FrameTypes(0x95)
-	FrameTypeRemoteATCommandResponse        = FrameTypes(0x97)
-	FrameTypeExtendedModemStatus            = FrameTypes(0x98)
-	FrameTypeOverTheAirFirmwareUpdateStatus = FrameTypes(0xA0)
-	FrameTypeRouterRecordIndicator          = FrameTypes(0xA1)
-	FrameTypeManyToOneRouteRequestIndicator = FrameTypes(0xA3)
-	FrameTypeJoinNotificationStatus         = FrameTypes(0xA5)
-)
-
-type XBeeFrame struct {
-	State    FrameStates
-	Length   uint16
-	Type     FrameTypes
-	Data     []byte
-	Checksum byte
-}
-
-type Redirection struct {
-	Scheme     string
-	Host       string
-	Port       int
-	Path       string
-	Parameters url.Values
-}
-
-func readSerial(fc chan<- XBeeFrame) {
-	c := &serial.Config{Name: "/dev/ttyUSB0", Baud: 9600 /*, ReadTimeout: 5 * time.Second*/}
-	s, err := serial.OpenPort(c)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var frame XBeeFrame
-	var escaping bool
-	var buffer bytes.Buffer
-	buf := make([]byte, 1)
-	for {
-		n, err := s.Read(buf)
-		if err != nil {
-			log.Fatal(err)
-		} else if n <= 0 {
-			log.Println("Haven't read any byte")
-			continue
-		}
-		//log.Printf("Received %d bytes: %x", n, buf)
-
-		// Handle start byte
-		b := buf[0]
-		if b == 0x7E {
-			//log.Println("FrameStart received!")
-			frame.State = FrameLength
-			escaping = false
-			buffer.Reset()
-			continue
-		}
-
-		// Handle escape byte
-		if b == 0x7D {
-			//log.Println("Escape character received!")
-			escaping = true
-			continue
-		} else if escaping {
-			escaping = false
-			b ^= 0x20
-		}
-
-		//log.Printf("%X", b)
-		switch frame.State {
-		case FrameLength:
-			buffer.WriteByte(b)
-			if buffer.Len() == 2 {
-				frame.Length = binary.BigEndian.Uint16(buffer.Next(2))
-				//log.Println("Frame length: ", frame.Length)
-				frame.State = FrameType
-			}
-		case FrameType:
-			frame.Type = FrameTypes(b)
-			//log.Printf("Frame type: %X\n", frame.Type)
-			frame.State = FrameData
-		case FrameData:
-			buffer.WriteByte(b)
-			if buffer.Len() == int(frame.Length)-1 {
-				frame.Data = buffer.Next(int(frame.Length) - 1)
-				//log.Printf("Frame data: % X\n", frame.Data)
-				frame.State = FrameChecksum
-			}
-		case FrameChecksum:
-			frame.Checksum = b
-			//log.Printf("Frame checksum: %X\n", frame.Checksum)
-			fc <- frame
-			frame.State = FrameStart
-		}
-	}
-}
-
-func processFrames(fc <-chan XBeeFrame) {
+func processFrames(fc <-chan xbee.Frame) {
 	var err error
 	for f := range fc {
 		switch f.Type {
-		case FrameTypeReceivePacket:
+		case xbee.TypeReceivePacket:
 			err = processReceivePacketFrame(f)
 		default:
 			log.Printf("Unsupported frame type: %X\n", f.Type)
@@ -147,7 +28,7 @@ func processFrames(fc <-chan XBeeFrame) {
 	}
 }
 
-func processReceivePacketFrame(f XBeeFrame) error {
+func processReceivePacketFrame(f xbee.Frame) error {
 	sa64 := f.Data[:8]
 	log.Printf("64-bit source address: % X", sa64)
 
@@ -182,7 +63,7 @@ func init() {
 	}
 	log.Infoln("Using config:", viper.ConfigFileUsed())
 
-	registeredRedirections = viper.Get("redirections").(map[string]interface{})
+	viper.UnmarshalKey("redirections", &registeredRedirections)
 	for k, v := range registeredRedirections {
 		log.Infoln("New redirection:", k, v)
 	}
@@ -190,7 +71,7 @@ func init() {
 
 func main() {
 	//stopChan := make(chan interface{})
-	frameChan := make(chan XBeeFrame)
+	frameChan := make(chan xbee.Frame)
 
 	var gracefulStop = make(chan os.Signal)
 	signal.Notify(gracefulStop, syscall.SIGTERM)
@@ -201,6 +82,6 @@ func main() {
 		close(frameChan)
 	}()
 
-	go readSerial(frameChan /*, stopChan*/)
+	go xbee.ReadSerial(frameChan, viper.GetString("serial.name"), viper.GetInt("serial.speed"))
 	processFrames(frameChan)
 }

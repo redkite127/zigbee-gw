@@ -1,0 +1,10 @@
+redirections:
+  0013a20041531c31:
+    room: cave
+    format: temperature;humidity
+  0013a20041531ccf:
+    room: kitchen
+    format: temperature;humidity
+serial:
+  name: /dev/ttyUSB0
+  speed: 9600
