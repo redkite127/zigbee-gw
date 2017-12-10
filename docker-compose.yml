@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  zigbee-gw:
+    build: .
+    container_name: zigbee-gw
+    image: zigbee-gw
+    restart: always
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    volumes:
+      - ./etc:/opt/zigbee-gw/etc
