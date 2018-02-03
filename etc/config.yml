@@ -5,6 +5,12 @@ redirections:
   0013a20041531ccf:
     room: kitchen
     format: temperature;humidity
+  0013a20041502662:
+    room: bedroom1
+    format: temperature;humidity
+  0013a2004172cf48:
+    room: bedroom2
+    format: temperature;humidity
 serial:
   name: /dev/ttyUSB0
   speed: 9600
