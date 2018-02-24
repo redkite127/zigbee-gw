@@ -14,6 +14,9 @@ redirections:
   0013a200414f8f0c:
     room: office
     format: temperature;humidity
+  0013a200415025db:
+    room: outdoor
+    format: temperature;humidity
 serial:
   name: /dev/ttyUSB0
   speed: 9600
