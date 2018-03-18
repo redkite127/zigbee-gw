@@ -7,7 +7,7 @@ import (
 	"github.com/redkite1/zigbee-gw/src/xbee"
 )
 
-func processFrames(fc <-chan xbee.Frame) {
+func processZBFrames(fc <-chan xbee.Frame, stop chan<- bool) {
 	var err error
 	for f := range fc {
 		switch f.Type {
@@ -21,6 +21,7 @@ func processFrames(fc <-chan xbee.Frame) {
 		}
 		log.Println("==============================================================")
 	}
+	stop <- true
 }
 
 func processReceivePacketFrame(f xbee.Frame) error {
