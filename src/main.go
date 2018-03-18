@@ -33,19 +33,20 @@ func init() {
 
 func main() {
 	ZBstop := make(chan bool)
-	frameChan := make(chan xbee.Frame)
+	ZBframeChan := make(chan xbee.Frame)
+
+	go xbee.ReadSerial(ZBframeChan, viper.GetString("serial.name"), viper.GetInt("serial.speed"))
+	go processZBFrames(ZBframeChan, ZBstop)
 
 	var gracefulStop = make(chan os.Signal)
 	signal.Notify(gracefulStop, syscall.SIGTERM)
 	signal.Notify(gracefulStop, syscall.SIGINT)
-	go func() {
-		sig := <-gracefulStop
-		log.Infof("caught sig: %+v", sig)
-		close(frameChan)
-	}()
 
-	go xbee.ReadSerial(frameChan, viper.GetString("serial.name"), viper.GetInt("serial.speed"))
-	go processZBFrames(frameChan, ZBstop)
+	sig := <-gracefulStop
+	log.Infof("Caught signal: %+v", sig)
+	log.Info("Stopping gracefully the application...")
 
+	// Stop processing more ZigBee frames
+	close(ZBframeChan)
 	<-ZBstop
 }
