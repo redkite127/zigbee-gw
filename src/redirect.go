@@ -5,22 +5,24 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+
+	"github.com/spf13/viper"
 )
 
-type Redirect struct {
+type ZBSource struct {
 	Room   string
 	Format string
 }
 
-var registeredRedirections map[string]Redirect
+var registeredZBSources map[string]ZBSource
 
 func redirect(source string, data []byte) error {
-	r, found := registeredRedirections[source]
+	r, found := registeredZBSources[source]
 	if !found {
 		return errors.New("Received packet from unregistered device")
 	}
 
-	u, err := url.Parse("http://10.161.0.130:2001/sensors")
+	u, err := url.Parse(viper.GetString("zb_redirection_url"))
 	if err != nil {
 		return errors.New("Can't parse redirection URL: " + err.Error())
 	}

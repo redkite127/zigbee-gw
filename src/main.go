@@ -53,6 +53,7 @@ func init() {
 	viper.SetConfigName("config")
 
 	//TODO What about giving an argument on startup for specifying config-dir?
+	viper.AddConfigPath(os.Getenv("etc_dir")) //TODO Handle ENV variable with viper
 	viper.AddConfigPath("/opt/zigbee-gw/etc")
 	viper.AddConfigPath("./etc")
 	viper.AddConfigPath(".")
@@ -63,9 +64,9 @@ func init() {
 	}
 	log.Infoln("Using config:", viper.ConfigFileUsed())
 
-	viper.UnmarshalKey("redirections", &registeredRedirections)
-	for k, v := range registeredRedirections {
-		log.Infoln("New redirection:", k, v)
+	viper.UnmarshalKey("zb_sources", &registeredZBSources)
+	for k, v := range registeredZBSources {
+		log.Infoln("New ZigBee source:", k, v)
 	}
 }
 
