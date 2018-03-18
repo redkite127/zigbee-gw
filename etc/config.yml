@@ -21,3 +21,5 @@ zb_sources:
 serial:
   name: /dev/ttyUSB0
   speed: 9600
+tcp:
+  port: 2003

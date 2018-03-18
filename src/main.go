@@ -32,12 +32,20 @@ func init() {
 }
 
 func main() {
-	ZBstop := make(chan bool)
+	// Prepare ZigBee listenning
 	ZBframeChan := make(chan xbee.Frame)
+	ZBstopped := make(chan bool)
 
 	go xbee.ReadSerial(ZBframeChan, viper.GetString("serial.name"), viper.GetInt("serial.speed"))
-	go processZBFrames(ZBframeChan, ZBstop)
+	go processZBFrames(ZBframeChan, ZBstopped)
 
+	// Prepare TCP listenning
+	TCPstop := make(chan bool)
+	TCPstopped := make(chan bool)
+
+	go processTCPrequests(TCPstop, TCPstopped)
+
+	// Prepare graceful shutdown
 	var gracefulStop = make(chan os.Signal)
 	signal.Notify(gracefulStop, syscall.SIGTERM)
 	signal.Notify(gracefulStop, syscall.SIGINT)
@@ -48,5 +56,11 @@ func main() {
 
 	// Stop processing more ZigBee frames
 	close(ZBframeChan)
-	<-ZBstop
+	// Stop processing more TCP requests
+	TCPstop <- true
+
+	<-ZBstopped
+	<-TCPstopped
+
+	log.Infoln("Application stopped gracefully")
 }

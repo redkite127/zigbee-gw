@@ -16,7 +16,7 @@ type ZBSource struct {
 
 var registeredZBSources map[string]ZBSource
 
-func redirect(source string, data []byte) error {
+func ZBredirect(source string, data []byte) error {
 	r, found := registeredZBSources[source]
 	if !found {
 		return errors.New("Received packet from unregistered device")

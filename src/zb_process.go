@@ -2,13 +2,15 @@ package main
 
 import (
 	"encoding/hex"
-	"log"
 
 	"github.com/redkite1/zigbee-gw/src/xbee"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
-func processZBFrames(fc <-chan xbee.Frame, stop chan<- bool) {
+func processZBFrames(fc <-chan xbee.Frame, stopped chan<- bool) {
 	var err error
+	log.Printf("Waiting ZigBee frames: %s", viper.GetString("serial.name"))
 	for f := range fc {
 		switch f.Type {
 		case xbee.TypeReceivePacket:
@@ -21,7 +23,8 @@ func processZBFrames(fc <-chan xbee.Frame, stop chan<- bool) {
 		}
 		log.Println("==============================================================")
 	}
-	stop <- true
+	log.Printf("No more ZigBee frame to process")
+	stopped <- true
 }
 
 func processReceivePacketFrame(f xbee.Frame) error {
@@ -38,7 +41,7 @@ func processReceivePacketFrame(f xbee.Frame) error {
 	log.Printf("RF data: % X", rfd)
 	log.Printf("RF data (string): %s", rfd)
 
-	if err := redirect(hex.EncodeToString(sa64), rfd); err != nil {
+	if err := ZBredirect(hex.EncodeToString(sa64), rfd); err != nil {
 		return err
 	}
 
