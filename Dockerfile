@@ -9,9 +9,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ../$SERVICE -v
 # RUNNER
 FROM alpine:3.7
 ARG SERVICE=zigbee-gw
-RUN apk --no-cache --update upgrade add \
-    ca-certificates \
-    curl
 ENV bin_dir /opt/zigbee-gw/bin
 ENV etc_dir /opt/zigbee-gw/etc
 ENV var_dir /opt/zigbee-gw/var
@@ -20,11 +17,15 @@ RUN mkdir -p ${bin_dir} && mkdir -p ${etc_dir} && mkdir -p ${var_dir}
 
 WORKDIR ${bin_dir}
 
-#COPY var/ ${var_dir}/
 COPY --from=builder /go/src/$SERVICE/$SERVICE .
 RUN chmod +x $SERVICE
 
 CMD ["./zigbee-gw"]
+
+# UPDATE DOCKER HUB IMAGE
+# docker build -f Dockerfile -t "redkite/zigbee-gw:latest" .
+# docker login
+# docker push redkite/zigbee-gw:latest
 
 #OLD DOCKERFILE
 # FROM alpine:3.6
