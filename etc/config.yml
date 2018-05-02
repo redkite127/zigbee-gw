@@ -17,7 +17,7 @@ zb_sources:
     format: temperature;humidity;power
   0013a200415025db:
     room: outdoor
-    format: temperature;humidity
+    format: temperature;humidity;power
 serial:
   name: /dev/ttyUSB0
   speed: 9600
