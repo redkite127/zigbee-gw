@@ -8,7 +8,13 @@ zb_sources:
     format: temperature;humidity
   0013a20041502662:
     room: bedroom1
-    format: temperature;humidity
+    format: temperature;humidity;power
+  0013a200418d0e57:
+    room: bedroom2
+    format: temperature;humidity;power
+  0013a200418d2be3:
+    room: bedroom3
+    format: temperature;humidity;power
   0013a2004172cf48:
     room: house
     format: L1;L2;L3
