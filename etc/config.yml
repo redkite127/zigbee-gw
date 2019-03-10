@@ -9,10 +9,10 @@ zb_sources:
   0013a20041502662:
     room: bedroom1
     format: temperature;humidity;power
-  0013a200418d0e57:
+  0013a20041940680: # XB3-24Z8PT-J
     room: bedroom2
     format: temperature;humidity;power
-  0013a200418d2be3:
+  0013a2004193ff77: # XB3-24Z8PT-J
     room: bedroom3
     format: temperature;humidity;power
   0013a2004172cf48:
@@ -24,8 +24,17 @@ zb_sources:
   0013a200415025db:
     room: outdoor
     format: temperature;humidity;power
+  0013a20041483246:
+    room: toilet1
+    format: json
 serial:
   name: /dev/ttyUSB0
   speed: 9600
 tcp:
   port: 2003
+
+# NOT USED
+#
+# XB3-24Z8PT - 0013a200418d0e57
+# XB3-24Z8PT - 0013a200418d331d
+# XB3-24Z8PT - 0013a200418d2be3
