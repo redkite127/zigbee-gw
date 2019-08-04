@@ -27,6 +27,15 @@ zb_sources:
   0013a20041483246:
     room: toilet1
     format: json
+  0013a2004193feff:
+    room: bathroom
+    format: json
+  0013a2004193ff49:
+    room: piano
+    format: json
+  0013a20041940531:
+    room: boiler
+    format: json
 serial:
   name: /dev/ttyUSB0
   speed: 9600
