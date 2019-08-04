@@ -27,15 +27,15 @@ zb_sources:
   0013a20041483246:
     room: toilet1
     format: json
-  0013a2004193feff:
+  0013a2004193feff: # XB3-24Z8PT-J
     room: bathroom
-    format: json
-  0013a2004193ff49:
+    format: temperature;humidity;power
+  0013a2004193ff49: # XB3-24Z8PT-J
     room: piano
-    format: json
-  0013a20041940531:
+    format: temperature;humidity;power
+  0013a20041940531: # XB3-24Z8PT-J
     room: boiler
-    format: json
+    format: temperature;humidity;power
 serial:
   name: /dev/ttyUSB0
   speed: 9600
