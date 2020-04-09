@@ -36,6 +36,9 @@ zb_sources:
   0013a200415025db: # XBP24CZ7WIT-004-revF
     room: boiler
     format: temperature;humidity
+  0013a2004193fd42: # XB3-24Z8PT-J
+    room: door
+    format: string
 serial:
   name: /dev/ttyUSB0
   speed: 9600
