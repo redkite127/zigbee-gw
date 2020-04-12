@@ -24,7 +24,7 @@ func ReadSerial(fc chan<- Frame, name string, speed int) {
 		if err != nil {
 			log.Fatal(err)
 		} else if n <= 0 {
-			log.Println("Haven't read any byte")
+			log.Debugf("Haven't read any byte")
 			continue
 		}
 		//log.Printf("Received %d bytes: %x", n, buf)
@@ -32,7 +32,7 @@ func ReadSerial(fc chan<- Frame, name string, speed int) {
 		// Handle start byte
 		b := buf[0]
 		if b == 0x7E {
-			//log.Println("FrameStart received!")
+			//log.Debugf("FrameStart received!")
 			frame.State = StateLength
 			escaping = false
 			buffer.Reset()
@@ -41,7 +41,7 @@ func ReadSerial(fc chan<- Frame, name string, speed int) {
 
 		// Handle escape byte
 		if b == 0x7D {
-			//log.Println("Escape character received!")
+			//log.Debugf("Escape character received!")
 			escaping = true
 			continue
 		} else if escaping {
@@ -55,23 +55,23 @@ func ReadSerial(fc chan<- Frame, name string, speed int) {
 			buffer.WriteByte(b)
 			if buffer.Len() == 2 {
 				frame.Length = binary.BigEndian.Uint16(buffer.Next(2))
-				//log.Println("Frame length: ", frame.Length)
+				//log.Debugf("Frame length: ", frame.Length)
 				frame.State = StateType
 			}
 		case StateType:
 			frame.Type = FrameType(b)
-			//log.Printf("Frame type: %X\n", frame.Type)
+			//log.Debugf("Frame type: %X\n", frame.Type)
 			frame.State = StateData
 		case StateData:
 			buffer.WriteByte(b)
 			if buffer.Len() == int(frame.Length)-1 {
 				frame.Data = buffer.Next(int(frame.Length) - 1)
-				//log.Printf("Frame data: % X\n", frame.Data)
+				//log.Debugf("Frame data: % X\n", frame.Data)
 				frame.State = StateChecksum
 			}
 		case StateChecksum:
 			frame.Checksum = b
-			//log.Printf("Frame checksum: %X\n", frame.Checksum)
+			//log.Debugf("Frame checksum: %X\n", frame.Checksum)
 			fc <- frame
 			frame.State = StateStart
 		}

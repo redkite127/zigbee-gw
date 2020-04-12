@@ -23,6 +23,8 @@ RUN chmod +x $SERVICE
 CMD ["./zigbee-gw"]
 
 # UPDATE DOCKER HUB IMAGE
+# =======================
+#
 # docker build -f Dockerfile -t "redkite/zigbee-gw:latest" .
 # docker login
 # docker push redkite/zigbee-gw:latest

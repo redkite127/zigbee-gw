@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -30,6 +31,7 @@ func ZBredirect(source64, source16 string, data []byte) error {
 		}
 		// no need to check found or not, it's a 64bits source comming from the config file!
 		r = registeredZBSources[fixed64]
+		log.Infof("64bits sources was corrupted, fixed: %s -> %s\n", source64, source16)
 	} else {
 		// Got an immediate match, recording its 16bits address
 		source16bits[source16] = source64
