@@ -41,7 +41,7 @@ func processReceivePacketFrame(f xbee.Frame) error {
 	log.Printf("RF data: % X", rfd)
 	log.Printf("RF data (string): %s", rfd)
 
-	if err := ZBredirect(hex.EncodeToString(sa64), rfd); err != nil {
+	if err := ZBredirect(hex.EncodeToString(sa64), hex.EncodeToString(sa16), rfd); err != nil {
 		return err
 	}
 
