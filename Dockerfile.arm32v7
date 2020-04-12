@@ -3,7 +3,7 @@ FROM golang:1.14 AS builder
 ARG SERVICE=zigbee-gw
 WORKDIR /go/src/$SERVICE
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -o $SERVICE -v
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -mod=vendor -o $SERVICE -v
 
 # RUNNER
 FROM alpine:3.11
