@@ -3,7 +3,8 @@ package main
 import (
 	"encoding/hex"
 
-	"github.com/redkite1/zigbee-gw/src/xbee"
+	"github.com/redkite1/zigbee-gw/xbee"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )

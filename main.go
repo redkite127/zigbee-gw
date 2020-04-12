@@ -5,7 +5,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/redkite1/zigbee-gw/src/xbee"
+	"github.com/redkite1/zigbee-gw/xbee"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -17,8 +18,8 @@ func init() {
 	viper.AddConfigPath(os.Getenv("etc_dir")) //TODO Handle ENV variable with viper
 	viper.AddConfigPath("/opt/zigbee-gw/etc")
 	viper.AddConfigPath("./etc")
+	viper.AddConfigPath("./configs")
 	viper.AddConfigPath(".")
-	viper.AddConfigPath("../etc")
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalln(err)
