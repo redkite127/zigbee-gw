@@ -1,13 +1,12 @@
 # BUILDER
-FROM golang:1.10 AS builder
+FROM golang:1.14 AS builder
 ARG SERVICE=zigbee-gw
-WORKDIR /go/src/$SERVICE/src
-COPY src .
-RUN go get -insecure -d -v
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -a -installsuffix cgo -o ../$SERVICE -v
+WORKDIR /go/src/$SERVICE
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -o $SERVICE -v
 
 # RUNNER
-FROM alpine:3.7
+FROM alpine:3.11
 ARG SERVICE=zigbee-gw
 ENV bin_dir /opt/zigbee-gw/bin
 ENV etc_dir /opt/zigbee-gw/etc

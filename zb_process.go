@@ -11,7 +11,7 @@ import (
 
 func processZBFrames(fc <-chan xbee.Frame, stopped chan<- bool) {
 	var err error
-	log.Debugf("Waiting ZigBee frames: %s", viper.GetString("serial.name"))
+	log.Infof("waiting ZigBee frames: %s", viper.GetString("serial.name"))
 	for f := range fc {
 		switch f.Type {
 		case xbee.TypeReceivePacket:
@@ -20,11 +20,11 @@ func processZBFrames(fc <-chan xbee.Frame, stopped chan<- bool) {
 			log.Printf("Unsupported frame type: %X\n", f.Type)
 		}
 		if err != nil {
-			log.Println(err)
+			log.Errorln(err)
 		}
-		log.Println("==============================================================")
+		log.Debugf("==============================================================")
 	}
-	log.Printf("No more ZigBee frame to process")
+	log.Infof("interrupted... no more ZigBee frame to process")
 	stopped <- true
 }
 

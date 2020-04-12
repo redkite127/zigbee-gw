@@ -18,7 +18,7 @@ func processTCPrequests(stop <-chan bool, stopped chan<- bool) {
 	http.HandleFunc("/zigbee", requestHandler)
 
 	go func() {
-		log.Infof("Waiting TCP requests: 0.0.0.0:%d", viper.GetInt("tcp.port"))
+		log.Infof("waiting TCP requests: 0.0.0.0:%d", viper.GetInt("tcp.port"))
 		if err := server.ListenAndServe(); err != http.ErrServerClosed {
 			log.Fatalln(err)
 		}
@@ -29,7 +29,7 @@ func processTCPrequests(stop <-chan bool, stopped chan<- bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	server.Shutdown(ctx)
-	log.Printf("No more TCP request to process")
+	log.Infof("interrupted... no more TCP request to process")
 	stopped <- true
 }
 
@@ -47,7 +47,7 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if destination == "" {
-		log.Println("Received TCP request for unregistered device")
+		log.Infoln("received TCP request for unregistered device")
 		http.NotFound(w, r)
 		return
 	}

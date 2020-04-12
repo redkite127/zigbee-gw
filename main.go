@@ -30,6 +30,10 @@ func init() {
 	for k, v := range registeredZBSources {
 		log.Infoln("New ZigBee source:", k, v)
 	}
+
+	if viper.GetBool("debug_mode") {
+		log.SetLevel(log.DebugLevel)
+	}
 }
 
 func main() {

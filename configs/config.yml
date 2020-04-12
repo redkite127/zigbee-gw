@@ -1,3 +1,4 @@
+debug_mode: true
 zb_redirection_url: http://10.161.0.111:2001/sensors
 zb_sources:
   0013a20041531c31:
