@@ -2,11 +2,10 @@ version: '3'
 
 services:
   zigbee-gw:
-    build: .
+    image: redkite/zigbee-gw
     container_name: zigbee-gw
-    image: zigbee-gw
-    restart: always
     devices:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
     volumes:
-      - ./etc:/opt/zigbee-gw/etc
+      - ./configs/:/usr/local/etc:ro
+    restart: unless-stopped
