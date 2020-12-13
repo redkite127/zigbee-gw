@@ -1,5 +1,5 @@
 debug_mode: true
-zb_redirection_url: http://10.161.0.111:2001/sensors
+zb_redirection_url: http://10.161.0.150:2001/sensors
 zb_sources:
   0013a20041531c31:
     room: cave
@@ -7,7 +7,7 @@ zb_sources:
   0013a20041531ccf:
     room: kitchen
     format: temperature;humidity
-  0013a20041502662:
+  0013a200419404fb: # XB3-24Z8PT-J
     room: bedroom1
     format: temperature;humidity;power
   0013a20041940680: # XB3-24Z8PT-J
@@ -51,3 +51,4 @@ tcp:
 # XB3-24Z8PT - 0013a200418d0e57
 # XB3-24Z8PT - 0013a200418d331d
 # XB3-24Z8PT - 0013a200418d2be3
+# XBP24CZ7WIT-004-revF - 0013a20041502662

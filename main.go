@@ -16,6 +16,7 @@ func init() {
 
 	//TODO What about giving an argument on startup for specifying config-dir?
 	viper.AddConfigPath(os.Getenv("etc_dir")) //TODO Handle ENV variable with viper
+	viper.AddConfigPath("/usr/local/etc")
 	viper.AddConfigPath("/opt/zigbee-gw/etc")
 	viper.AddConfigPath("./etc")
 	viper.AddConfigPath("./configs")
