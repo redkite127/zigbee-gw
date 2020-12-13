@@ -1,25 +1,16 @@
 # BUILDER
-FROM golang:1.14 AS builder
-ARG SERVICE=zigbee-gw
-WORKDIR /go/src/$SERVICE
+FROM golang:1.15 AS builder
+WORKDIR /go-build
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -o $SERVICE -v
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -o /go-build/zigbee-gw .
 
 # RUNNER
-FROM alpine:3.11
-ARG SERVICE=zigbee-gw
-ENV bin_dir /opt/zigbee-gw/bin
-ENV etc_dir /opt/zigbee-gw/etc
-ENV var_dir /opt/zigbee-gw/var
+FROM alpine:3.12
+WORKDIR /usr/local/bin
+COPY --from=builder /go-build/zigbee-gw .
 
-RUN mkdir -p ${bin_dir} && mkdir -p ${etc_dir} && mkdir -p ${var_dir}
-
-WORKDIR ${bin_dir}
-
-COPY --from=builder /go/src/$SERVICE/$SERVICE .
-RUN chmod +x $SERVICE
-
-CMD ["./zigbee-gw"]
+# it does accept the variable $SERVICE
+CMD ["home-hub"]
 
 # Upload to Docker Hub
 # docker build -f Dockerfile.linux-amd64 -t redkite/zigbee-gw:latest-linux-amd64 .
