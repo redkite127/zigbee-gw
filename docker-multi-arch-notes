@@ -1,5 +1,7 @@
 * Once you have built & pushed each images on your platforms you can create a manifest file and push it
 
+docker manifest rm redkite/zigbee-gw:latest
+
 docker manifest create \
 redkite/zigbee-gw:latest \
 --amend redkite/zigbee-gw:latest-linux-amd64 \
