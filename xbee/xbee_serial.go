@@ -8,14 +8,14 @@ import (
 	"github.com/tarm/serial"
 )
 
-func ReadSerial(fc chan<- Frame, name string, speed int) {
+func ReadSerial(fc chan<- ReceivePacketFrame, name string, speed int) {
 	c := &serial.Config{Name: name, Baud: speed /*, ReadTimeout: 5 * time.Second*/}
 	s, err := serial.OpenPort(c)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var frame Frame
+	var frame ReceivePacketFrame
 	var escaping bool
 	var buffer bytes.Buffer
 	buf := make([]byte, 1)

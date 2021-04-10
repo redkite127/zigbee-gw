@@ -1,11 +1,37 @@
 package xbee
 
-type Frame struct {
+type ReceivePacketFrame struct {
 	State    FrameState
 	Length   uint16
 	Type     FrameType
 	Data     []byte
 	Checksum byte
+}
+
+type RemoteATCommandRequestFrame struct {
+	StartDelimiter       byte
+	Length               [2]byte
+	Type                 byte
+	ID                   byte
+	DestinationAddress64 [8]byte
+	DestinationAddress16 [2]byte
+	RemoteCommandOptions byte
+	ATCommand            [2]byte
+	ParameterValue       []byte
+	Checksum             byte
+}
+
+type RemoteATCommandResponseFrame struct {
+	StartDelimiter       byte
+	Length               [2]byte
+	Type                 byte
+	ID                   byte
+	DestinationAddress64 [8]byte
+	DestinationAddress16 [2]byte
+	ATCommand            [2]byte
+	CommandStatus        byte
+	ParameterValue       []byte
+	Checksum             byte
 }
 
 type FrameState uint8
