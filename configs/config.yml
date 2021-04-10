@@ -1,6 +1,6 @@
 debug_mode: true
 serial:
-  name: /dev/ttyUSB1
+  name: /dev/ttyUSB0
   speed: 9600
 tcp:
   port: 2003
