@@ -1,4 +1,9 @@
 debug_mode: true
+serial:
+  name: /dev/ttyUSB1
+  speed: 9600
+tcp:
+  port: 2003
 zb_redirection_url: http://10.28.1.150:2001/sensors
 zb_sources:
   0013a20041531c31:
@@ -37,11 +42,6 @@ zb_sources:
   0013a2004193fd42: # XB3-24Z8PT-J
     room: door
     format: string
-serial:
-  name: /dev/ttyUSB0
-  speed: 9600
-tcp:
-  port: 2003
 
 # NOT USED
 #

@@ -42,7 +42,8 @@ func main() {
 	ZBframeChan := make(chan xbee.ReceivePacketFrame)
 	ZBstopped := make(chan bool)
 
-	go xbee.ReadSerial(ZBframeChan, viper.GetString("serial.name"), viper.GetInt("serial.speed"))
+	xbee.InitSerial(viper.GetString("serial.name"), viper.GetInt("serial.speed"))
+	go xbee.ReadSerial(ZBframeChan)
 	go processZBFrames(ZBframeChan, ZBstopped)
 
 	// Prepare TCP listenning

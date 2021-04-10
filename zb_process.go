@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/hex"
+	"fmt"
+	"strings"
 
 	"github.com/redkite1/zigbee-gw/xbee"
 
@@ -18,6 +20,8 @@ func processZBFrames(fc <-chan xbee.ReceivePacketFrame, stopped chan<- bool) {
 			err = processReceivePacketFrame(f)
 		case xbee.TypeRemoteATCommandResponse:
 			err = processRemoteATCommandResponseFrame(f)
+		case xbee.TypeTransmitStatus:
+			continue
 		default:
 			log.Printf("Unsupported frame type: %X\n", f.Type)
 		}
@@ -58,14 +62,22 @@ func processRemoteATCommandResponseFrame(f xbee.ReceivePacketFrame) error {
 	//TODO frame.Length
 	frame.Type = byte(f.Type)
 	frame.ID = f.Data[0]
-	copy(frame.DestinationAddress64[:], f.Data[1:9])
-	copy(frame.DestinationAddress16[:], f.Data[9:11])
+	copy(frame.SourceAddress64[:], f.Data[1:9])
+	copy(frame.SourceAddress16[:], f.Data[9:11])
 	copy(frame.ATCommand[:], f.Data[11:13])
 	frame.CommandStatus = f.Data[13]
-	//TODO frame.ParameterValue
+
+	frame.ParameterValue = make([]byte, len(f.Data[14:]))
+	copy(frame.ParameterValue[:], f.Data[14:])
+
 	//TODO frame.Checksum
 
-	log.Debugf("%+v", frame)
+	switch strings.ToUpper(string(frame.ATCommand[:])) {
+	case "SH":
+		xbee.RecordSH(fmt.Sprintf("%X", frame.SourceAddress16), fmt.Sprintf("%X", frame.ParameterValue))
+	case "SL":
+		xbee.RecordSL(fmt.Sprintf("%X", frame.SourceAddress16), fmt.Sprintf("%X", frame.ParameterValue))
+	}
 
 	return nil
 }

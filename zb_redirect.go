@@ -3,9 +3,11 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
+	"github.com/redkite1/zigbee-gw/xbee"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -15,26 +17,19 @@ type ZBSource struct {
 	Format string
 }
 
-// Recording last 16bits address in case a 64bit address gets corrupted... (it happend)
-var source16bits = map[string]string{}
 var registeredZBSources map[string]ZBSource
 
-func ZBredirect(source64, source16 string, data []byte) error {
+func ZBredirect(source64, source16 string, data []byte) (err error) {
 	// looking for a registered 64bits source (from config file)
 	r, found := registeredZBSources[source64]
 	if !found {
-		// if not found, the source address may have been corrupted, looking inside previous
-		// successfully matched 64bits sources for a 16bits source match. (the 16bits address is given when joinging a newtwork)
-		fixed64, found2 := source16bits[source16]
-		if !found2 {
-			return errors.New("Received packet from unregistered device")
+		source64, err = xbee.Fix64address(source16)
+		if err != nil {
+			return fmt.Errorf("failed to fix the corrupted/missing 64-bits source address: %w")
 		}
-		// no need to check found or not, it's a 64bits source comming from the config file!
-		r = registeredZBSources[fixed64]
-		log.Infof("64bits sources was corrupted, fixed: %s -> %s\n", source64, source16)
-	} else {
-		// Got an immediate match, recording its 16bits address
-		source16bits[source16] = source64
+		log.Debugf("64-bits source address had been fixed: %s -> %s", source16, source64)
+	} else if source16 != "" && source16 != "FFFF" && source16 != "FFEE" && source16 != "0000" {
+		xbee.Record16bitsAddress(source64, source16)
 	}
 
 	u, err := url.Parse(viper.GetString("zb_redirection_url"))
