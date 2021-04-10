@@ -25,7 +25,7 @@ func ZBredirect(source64, source16 string, data []byte) (err error) {
 	if !found {
 		source64, err = xbee.Fix64address(source16)
 		if err != nil {
-			return fmt.Errorf("failed to fix the corrupted/missing 64-bits source address: %w")
+			return fmt.Errorf("failed to fix the corrupted/missing 64-bits source address: %w", err)
 		}
 		log.Debugf("64-bits source address had been fixed: %s -> %s", source16, source64)
 	} else if source16 != "" && source16 != "FFFF" && source16 != "FFEE" && source16 != "0000" {
