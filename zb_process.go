@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/hex"
-	"fmt"
 	"strings"
 
 	"github.com/redkite1/zigbee-gw/xbee"
@@ -74,9 +73,9 @@ func processRemoteATCommandResponseFrame(f xbee.ReceivePacketFrame) error {
 
 	switch strings.ToUpper(string(frame.ATCommand[:])) {
 	case "SH":
-		xbee.RecordSH(fmt.Sprintf("%X", frame.SourceAddress16), fmt.Sprintf("%X", frame.ParameterValue))
+		xbee.RecordSH(hex.EncodeToString(frame.SourceAddress16[:]), hex.EncodeToString(frame.ParameterValue))
 	case "SL":
-		xbee.RecordSL(fmt.Sprintf("%X", frame.SourceAddress16), fmt.Sprintf("%X", frame.ParameterValue))
+		xbee.RecordSL(hex.EncodeToString(frame.SourceAddress16[:]), hex.EncodeToString(frame.ParameterValue))
 	}
 
 	return nil
