@@ -39,15 +39,22 @@ func Fix64address(address16 string) (string, error) {
 }
 
 func Get64addressFrom16address(address16 string) (string, error) {
-	SendRemoteATcommand("", address16, "SH")
-	SendRemoteATcommand("", address16, "SL")
+	r1 := NewRemoteATCommandRequestAPIFrameData()
+	r1.SetDestinationAddress16(address16)
+	r1.SetATCommand("SH")
+	WriteAPIFameDataToSerial(r1)
+
+	r2 := NewRemoteATCommandRequestAPIFrameData()
+	r2.SetDestinationAddress16(address16)
+	r2.SetATCommand("SL")
+	WriteAPIFameDataToSerial(r2)
 
 	time.Sleep(5 * time.Second)
 
 	sh, found1 := shortToSH[address16]
 	sl, found2 := shortToSL[address16]
 	if !found1 || !found2 {
-		return "", fmt.Errorf("failed to retrieve SH & SL")
+		return "", fmt.Errorf("failed to retrieve SH & SL (%t;%t)", found1, found2)
 	}
 
 	Record16bitsAddress(sh+sl, address16)

@@ -1,0 +1,3 @@
+Wehn sending a message from router to coordinator:
+- it doesn't find the address in config => ok
+- it try to fix with SH & SL and fail... why?

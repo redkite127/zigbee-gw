@@ -40,7 +40,7 @@ func init() {
 
 func main() {
 	// Prepare ZigBee listenning
-	ZBframeChan := make(chan xbee.ReceivePacketFrame)
+	ZBframeChan := make(chan xbee.APIFrame)
 	ZBstopped := make(chan bool)
 
 	xbee.InitSerial(viper.GetString("serial.name"), viper.GetInt("serial.speed"))
