@@ -4,6 +4,11 @@ serial:
   speed: 9600
 tcp:
   port: 2003
+mqtt:
+  host: "10.28.1.150"
+  port: 1883
+  username: home-hub
+  password: 3YBmyMo6r7yNt8zohLPXRXYShpSJi6Z2
 zb_redirection_url: http://10.28.1.150:2001/sensors
 zb_sources:
   0013a20041531c31:

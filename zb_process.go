@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/hex"
+	"fmt"
 	"strings"
 
+	"github.com/redkite1/zigbee-gw/mqtt"
 	"github.com/redkite1/zigbee-gw/xbee"
 
 	log "github.com/sirupsen/logrus"
@@ -71,9 +73,16 @@ func processRemoteATCommandResponseFrame(f xbee.ReceivePacketFrame) error {
 
 	//TODO frame.Checksum
 
+	if frame.CommandStatus != 0x00 {
+		return fmt.Errorf("remote_at_command_response status is not OK: % X", frame.CommandStatus)
+	}
+
 	switch strings.ToUpper(string(frame.ATCommand[:])) {
 	case "SH":
 		xbee.RecordSH(hex.EncodeToString(frame.SourceAddress16[:]), hex.EncodeToString(frame.ParameterValue))
+		if err := mqtt.Publish("xbee/remote_at_commmand_response", frame); err != nil {
+			log.Errorln(err)
+		}
 	case "SL":
 		xbee.RecordSL(hex.EncodeToString(frame.SourceAddress16[:]), hex.EncodeToString(frame.ParameterValue))
 	}

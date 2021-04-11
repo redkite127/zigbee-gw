@@ -5,6 +5,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/redkite1/zigbee-gw/mqtt"
 	"github.com/redkite1/zigbee-gw/xbee"
 
 	log "github.com/sirupsen/logrus"
@@ -43,6 +44,8 @@ func main() {
 	ZBstopped := make(chan bool)
 
 	xbee.InitSerial(viper.GetString("serial.name"), viper.GetInt("serial.speed"))
+	mqtt.InitMQTT(viper.GetString("mqtt.host"), viper.GetInt("mqtt.port"), viper.GetString("mqtt.username"), viper.GetString("mqtt.password"))
+
 	go xbee.ReadSerial(ZBframeChan)
 	go processZBFrames(ZBframeChan, ZBstopped)
 
@@ -61,6 +64,8 @@ func main() {
 	log.Infof("Caught signal: %+v", sig)
 	log.Info("Stopping gracefully the application...")
 
+	// Disconnect from MQTT
+	mqtt.Client.Disconnect(5000)
 	// Stop processing more ZigBee frames
 	close(ZBframeChan)
 	// Stop processing more TCP requests
