@@ -2,3 +2,4 @@ zigbee-gw*
 
 .directory
 .vscode
+configs/config.yml

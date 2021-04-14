@@ -1,0 +1,22 @@
+debug_mode: false
+serial:
+  name: /dev/ttyUSB0
+  speed: 9600
+tcp:
+  port: 2003
+mqtt:
+  host: "x.x.x.x"
+  port: 1883
+  username: <username>
+  password: <password>
+zb_redirection_url: http://<host>:<port>/<path>
+zb_sources:
+  0013a20012345678:
+    room: cave
+    format: temperature;humidity
+  0013a20087654321:
+    room: kitchen
+    format: temperature;humidity;power
+  0013a20011111111:
+    room: door
+    format: string
