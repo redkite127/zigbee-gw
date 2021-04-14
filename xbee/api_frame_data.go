@@ -1,5 +1,6 @@
 package xbee
 
 type APIFrameData interface {
-	Bytes() []byte
+	Bytes() ([]byte, error)
+	FromBytes(b []byte) error
 }

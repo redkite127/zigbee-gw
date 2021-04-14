@@ -4,9 +4,12 @@ package xbee
 
 import (
 	"bytes"
+	"fmt"
 )
 
-type ReceivePacketAPIFrameData struct {
+const receivePacketFrameDataMinimumSize = 12
+
+type ReceivePacketFrameData struct {
 	Type            byte
 	SourceAddress64 [8]byte
 	SourceAddress16 [2]byte
@@ -15,8 +18,8 @@ type ReceivePacketAPIFrameData struct {
 }
 
 //TODO really useful for frame that we receive? Don't we only need this for transmit frame types?
-func NewReceivePacketAPIFrameData() ReceivePacketAPIFrameData {
-	return ReceivePacketAPIFrameData{
+func NewReceivePacketFrameData() ReceivePacketFrameData {
+	return ReceivePacketFrameData{
 		Type:            0x90,
 		SourceAddress64: [8]byte{},
 		SourceAddress16: [2]byte{},
@@ -25,9 +28,20 @@ func NewReceivePacketAPIFrameData() ReceivePacketAPIFrameData {
 	}
 }
 
+func (f *ReceivePacketFrameData) FromBytes(b []byte) error {
+	return f.UnmarshalBinary(b)
+}
+
 //TODO really useful for frame that we receive? Don't we only need this for transmit frame types?
-func (f ReceivePacketAPIFrameData) Bytes() []byte {
+func (f ReceivePacketFrameData) Bytes() ([]byte, error) {
+	return f.MarshalBinary()
+}
+
+// MarshalBinary implements encoding.BinaryMarshaler.
+func (f ReceivePacketFrameData) MarshalBinary() ([]byte, error) {
+	//TODO how to reduce memory consumption and return immediatelly a byte array or a reader?
 	var buf bytes.Buffer
+	buf.Grow(receivePacketFrameDataMinimumSize)
 
 	buf.WriteByte(f.Type)
 	buf.Write(f.SourceAddress64[:])
@@ -35,5 +49,29 @@ func (f ReceivePacketAPIFrameData) Bytes() []byte {
 	buf.WriteByte(f.ReceiveOptions)
 	buf.Write(f.ReceivedData)
 
-	return buf.Bytes()
+	return buf.Bytes(), nil
+}
+
+// UnmarshalBinary implements encoding.BinaryUnmarshaler.
+func (f *ReceivePacketFrameData) UnmarshalBinary(data []byte) error {
+	if len(data) < receivePacketFrameDataMinimumSize {
+		return fmt.Errorf("invalid 'Receive Packet' frame data (got only %d bytes)", len(data))
+	}
+	if ReceiveAPIFrameType(data[0]) != TypeReceivePacket {
+		return fmt.Errorf("invalid 'Receive Packet' frame data type (got %X instead of %X)", data[0], TypeReceivePacket)
+	}
+
+	offset := 0
+	f.Type = data[offset]
+	offset += 1
+	copy(f.SourceAddress64[:], data[offset:offset+8])
+	offset += 8
+	copy(f.SourceAddress16[:], data[offset:offset+2])
+	offset += 2
+	f.ReceiveOptions = data[offset]
+	offset += 1
+	f.ReceivedData = make([]byte, len(data[offset:]))
+	copy(f.ReceivedData[:], data[offset:])
+
+	return nil
 }

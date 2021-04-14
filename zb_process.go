@@ -18,9 +18,10 @@ func processZBFrames(fc <-chan xbee.APIFrame, stopped chan<- bool) {
 	for f := range fc {
 		switch xbee.ReceiveAPIFrameType(f.Data[0]) {
 		case xbee.TypeReceivePacket:
-			err = processReceivePacketFrame(f)
+			//err = processReceivePacketFrame(f)
+			go processReceivePacketFrame(f)
 		case xbee.TypeRemoteATCommandResponse:
-			err = processRemoteATCommandResponseFrame(f)
+			go processRemoteATCommandResponseFrame(f)
 		case xbee.TypeTransmitStatus:
 			continue
 		default:
@@ -37,22 +38,28 @@ func processZBFrames(fc <-chan xbee.APIFrame, stopped chan<- bool) {
 }
 
 func processReceivePacketFrame(f xbee.APIFrame) error {
-	//TODO move that in xbee/api_frame_data_receive_packet.go in a FromBytes functions?
+	// frame := xbee.ReceivePacketFrameData{}
+	// buf := bytes.NewReader(f.Data)
+	// err := binary.Read(buf, binary.BigEndian, &frame)
+	// if err != nil {
+	// 	log.Errorf("failed to decode 'Receive Packet' frame data: %w", err)
+	// 	return fmt.Errorf("failed to decode 'Receive Packet' frame data: %w", err)
+	// }
+	//WHY UnmarshalBinary is not called?
 
-	sa64 := f.Data[:8]
-	log.Debugf("64-bit source address: % X", sa64)
+	var frame xbee.ReceivePacketFrameData
+	if err := frame.FromBytes(f.Data); err != nil {
+		log.Errorf("failed to decode 'Receive Packet' frame data: %s", err)
+		return err
+	}
 
-	sa16 := f.Data[8:10]
-	log.Debugf("16-bit source address: % X", sa16)
+	log.Debugf("64-bit source address: % X", frame.SourceAddress64)
+	log.Debugf("16-bit source address: % X", frame.SourceAddress16)
+	log.Debugf("Receive options: % X", frame.ReceiveOptions)
+	log.Debugf("RF data: % X", frame.ReceivedData)
+	log.Debugf("RF data (string): %s", frame.ReceivedData)
 
-	ro := f.Data[10:11]
-	log.Debugf("Receive options: % X", ro)
-
-	rfd := f.Data[11:]
-	log.Debugf("RF data: % X", rfd)
-	log.Debugf("RF data (string): %s", rfd)
-
-	if err := ZBredirect(hex.EncodeToString(sa64), hex.EncodeToString(sa16), rfd); err != nil {
+	if err := ZBredirect(hex.EncodeToString(frame.SourceAddress64[:]), hex.EncodeToString(frame.SourceAddress16[:]), frame.ReceivedData); err != nil {
 		return err
 	}
 
@@ -60,25 +67,11 @@ func processReceivePacketFrame(f xbee.APIFrame) error {
 }
 
 func processRemoteATCommandResponseFrame(f xbee.APIFrame) error {
-	var frame xbee.RemoteATCommandResponseAPIFrameData
-
-	//TODO move that in xbee/api_frame_data_remote_at_command_request.go in a FromBytes functions?
-	offset := 0
-	frame.Type = f.Data[offset]
-	offset += 1
-	frame.ID = f.Data[offset]
-	offset += 1
-	copy(frame.SourceAddress64[:], f.Data[offset:offset+8])
-	offset += 8
-	copy(frame.SourceAddress16[:], f.Data[offset:offset+2])
-	offset += 2
-	copy(frame.ATCommand[:], f.Data[offset:offset+2])
-	offset += 2
-	frame.CommandStatus = f.Data[offset]
-	offset += 1
-
-	frame.ParameterValue = make([]byte, len(f.Data[offset:]))
-	copy(frame.ParameterValue[:], f.Data[offset:])
+	var frame xbee.RemoteATCommandResponseFrameData
+	if err := frame.FromBytes(f.Data); err != nil {
+		log.Errorf("failed to decode 'Remote AT Command Response' frame data: %s", err)
+		return err
+	}
 
 	if frame.CommandStatus != 0x00 {
 		var msg string
@@ -95,7 +88,7 @@ func processRemoteATCommandResponseFrame(f xbee.APIFrame) error {
 			msg = "Unknwon status code"
 		}
 
-		return fmt.Errorf("remote_at_command_response status is not OK (%X=%s)", frame.CommandStatus, msg)
+		return fmt.Errorf("'Remote AT Command Response' status is not OK (%X = %s)", frame.CommandStatus, msg)
 	}
 
 	switch strings.ToUpper(string(frame.ATCommand[:])) {

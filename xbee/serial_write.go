@@ -6,7 +6,7 @@ import (
 )
 
 func WriteAPIFameDataToSerial(fd APIFrameData) error {
-	ba := fd.Bytes()
+	ba, _ := fd.Bytes()
 
 	var buf bytes.Buffer
 	buf.WriteByte(0x7e)                                   // Start Delimiter

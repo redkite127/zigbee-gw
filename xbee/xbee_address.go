@@ -39,15 +39,15 @@ func Fix64address(address16 string) (string, error) {
 }
 
 func Get64addressFrom16address(address16 string) (string, error) {
-	r1 := NewRemoteATCommandRequestAPIFrameData()
+	r1 := NewRemoteATCommandRequestFrameData()
 	r1.SetDestinationAddress16(address16)
 	r1.SetATCommand("SH")
-	WriteAPIFameDataToSerial(r1)
+	WriteAPIFameDataToSerial(&r1)
 
-	r2 := NewRemoteATCommandRequestAPIFrameData()
+	r2 := NewRemoteATCommandRequestFrameData()
 	r2.SetDestinationAddress16(address16)
 	r2.SetATCommand("SL")
-	WriteAPIFameDataToSerial(r2)
+	WriteAPIFameDataToSerial(&r2)
 
 	time.Sleep(5 * time.Second)
 
