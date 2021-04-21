@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/redkite1/zigbee-gw/mqtt"
 	"github.com/redkite1/zigbee-gw/xbee"
 
 	log "github.com/sirupsen/logrus"
@@ -18,7 +17,6 @@ func processZBFrames(fc <-chan xbee.APIFrame, stopped chan<- bool) {
 	for f := range fc {
 		switch xbee.ReceiveAPIFrameType(f.Data[0]) {
 		case xbee.TypeReceivePacket:
-			//err = processReceivePacketFrame(f)
 			go processReceivePacketFrame(f)
 		case xbee.TypeRemoteATCommandResponse:
 			go processRemoteATCommandResponseFrame(f)
@@ -94,9 +92,6 @@ func processRemoteATCommandResponseFrame(f xbee.APIFrame) error {
 	switch strings.ToUpper(string(frame.ATCommand[:])) {
 	case "SH":
 		xbee.RecordSH(hex.EncodeToString(frame.SourceAddress16[:]), hex.EncodeToString(frame.ParameterValue[:]))
-		if err := mqtt.Publish("xbee/remote_at_commmand_response", frame); err != nil {
-			log.Errorln(err)
-		}
 	case "SL":
 		xbee.RecordSL(hex.EncodeToString(frame.SourceAddress16[:]), hex.EncodeToString(frame.ParameterValue[:]))
 	}
