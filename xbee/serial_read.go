@@ -23,7 +23,7 @@ func ReadSerial(fc chan<- APIFrame) {
 		// read one byte
 		n, err := serialPort.Read(buf)
 		if err != nil {
-			log.Fatalf("failed to read from serial port: %w", err)
+			log.Fatalf("failed to read from serial port: %s", err)
 		} else if n <= 0 {
 			//log.Debug("haven't read any byte")
 			continue
