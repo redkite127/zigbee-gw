@@ -14,17 +14,14 @@ var shortToSL = map[string]string{}
 
 func Record16bitsAddress(address64, address16 string) {
 	shortToLongAddress[address16] = address64
-	log.Debugln(shortToLongAddress)
 }
 
 func RecordSH(address16, sh string) {
 	shortToSH[address16] = sh
-	log.Debugln("SH:", shortToSH)
 }
 
 func RecordSL(address16, sl string) {
 	shortToSL[address16] = sl
-	log.Debugln("SL:", shortToSL)
 }
 
 func Fix64address(address16 string) (string, error) {

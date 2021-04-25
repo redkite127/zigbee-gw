@@ -25,7 +25,7 @@ func processZBFrames(fc <-chan xbee.APIFrame, stopped chan<- bool) {
 		default:
 			log.Printf("Unsupported frame type: %X\n", f.Data[0])
 		}
-		log.Debugln(f)
+		//log.Debugln(f)
 		if err != nil {
 			log.Errorln(err)
 		}
