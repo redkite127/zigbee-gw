@@ -5,7 +5,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/redkite1/zigbee-gw/mqtt"
 	"github.com/redkite1/zigbee-gw/xbee"
 
 	log "github.com/sirupsen/logrus"
@@ -16,9 +15,7 @@ func init() {
 	viper.SetConfigName("config")
 
 	//TODO What about giving an argument on startup for specifying config-dir?
-	viper.AddConfigPath(os.Getenv("etc_dir")) //TODO Handle ENV variable with viper
 	viper.AddConfigPath("/usr/local/etc")
-	viper.AddConfigPath("/opt/zigbee-gw/etc")
 	viper.AddConfigPath("./etc")
 	viper.AddConfigPath("./configs")
 	viper.AddConfigPath(".")
@@ -40,11 +37,11 @@ func init() {
 
 func main() {
 	// Prepare ZigBee listenning
-	ZBframeChan := make(chan xbee.ReceivePacketFrame)
+	ZBframeChan := make(chan xbee.APIFrame)
 	ZBstopped := make(chan bool)
 
 	xbee.InitSerial(viper.GetString("serial.name"), viper.GetInt("serial.speed"))
-	mqtt.InitMQTT(viper.GetString("mqtt.host"), viper.GetInt("mqtt.port"), viper.GetString("mqtt.username"), viper.GetString("mqtt.password"))
+	//mqtt.InitMQTT(viper.GetString("mqtt.host"), viper.GetInt("mqtt.port"), viper.GetString("mqtt.username"), viper.GetString("mqtt.password"))
 
 	go xbee.ReadSerial(ZBframeChan)
 	go processZBFrames(ZBframeChan, ZBstopped)
@@ -65,7 +62,7 @@ func main() {
 	log.Info("Stopping gracefully the application...")
 
 	// Disconnect from MQTT
-	mqtt.Client.Disconnect(5000)
+	// mqtt.Client.Disconnect(5000)
 	// Stop processing more ZigBee frames
 	close(ZBframeChan)
 	// Stop processing more TCP requests
