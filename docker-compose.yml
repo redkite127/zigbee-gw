@@ -4,6 +4,8 @@ services:
   zigbee-gw:
     image: redkite/zigbee-gw
     container_name: zigbee-gw
+    ports:
+      - 2003:2003
     devices:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
     volumes:
