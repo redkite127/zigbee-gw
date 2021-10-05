@@ -61,7 +61,22 @@ func (f *TransmitRequestFrameData) SetDestinationAddress16(address16 string) err
 
 // func (f *TransmitRequestFrameData) SetTransmitOptions(options byte) error
 
-// func (f *TransmitRequestFrameData) SetPayloadData(payload []byte) error
+func (f *TransmitRequestFrameData) SetPayloadData(payload []byte) error {
+
+	f.PayloadData = make([]byte, len(payload))
+	copy(f.PayloadData[:], payload)
+
+	return nil
+}
+
+func (f *TransmitRequestFrameData) FromBytes(b []byte) error {
+	return f.UnmarshalBinary(b)
+}
+
+//TODO really useful for frame that we receive? Don't we only need this for transmit frame types?
+func (f TransmitRequestFrameData) Bytes() ([]byte, error) {
+	return f.MarshalBinary()
+}
 
 // MarshalBinary implements encoding.BinaryMarshaler.
 func (f TransmitRequestFrameData) MarshalBinary() ([]byte, error) {

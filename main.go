@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/redkite1/zigbee-gw/xbee"
 
+	"github.com/oklog/run"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -36,40 +39,53 @@ func init() {
 }
 
 func main() {
-	// Prepare ZigBee listenning
-	ZBframeChan := make(chan xbee.APIFrame)
-	ZBstopped := make(chan bool)
+	var g run.Group
 
-	xbee.InitSerial(viper.GetString("serial.name"), viper.GetInt("serial.speed"))
-	//mqtt.InitMQTT(viper.GetString("mqtt.host"), viper.GetInt("mqtt.port"), viper.GetString("mqtt.username"), viper.GetString("mqtt.password"))
+	// receiving and process ZigBee frames
+	{
+		ZBframeChan := make(chan xbee.APIFrame)
+		xbee.InitSerial(viper.GetString("serial.name"), viper.GetInt("serial.speed"))
+		go xbee.ReadSerial(ZBframeChan)
 
-	go xbee.ReadSerial(ZBframeChan)
-	go processZBFrames(ZBframeChan, ZBstopped)
+		//mqtt.InitMQTT(viper.GetString("mqtt.host"), viper.GetInt("mqtt.port"), viper.GetString("mqtt.username"), viper.GetString("mqtt.password"))
 
-	// Prepare TCP listenning
-	TCPstop := make(chan bool)
-	TCPstopped := make(chan bool)
+		ctx, cancel := context.WithCancel(context.Background())
+		g.Add(func() error {
+			processZBFrames(ctx, ZBframeChan)
+			return nil
+		}, func(error) {
+			cancel()
+		})
+	}
 
-	go processTCPrequests(TCPstop, TCPstopped)
+	// receive and process HTTP requests
+	{
+		ctx, cancel := context.WithCancel(context.Background())
+		g.Add(func() error {
+			processTCPrequests(ctx)
+			return nil
+		}, func(error) {
+			cancel()
+		})
+	}
 
-	// Prepare graceful shutdown
-	var gracefulStop = make(chan os.Signal)
-	signal.Notify(gracefulStop, syscall.SIGTERM)
-	signal.Notify(gracefulStop, syscall.SIGINT)
+	// handle termination on signals
+	{
+		cancelHandlerChan := make(chan struct{})
+		g.Add(func() error {
+			c := make(chan os.Signal, 1)
+			signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+			select {
+			case sig := <-c:
+				return fmt.Errorf("received signal %s", sig)
+			case <-cancelHandlerChan:
+				log.Infof("interrupted... no more signals to handle")
+				return nil
+			}
+		}, func(error) {
+			close(cancelHandlerChan)
+		})
+	}
 
-	sig := <-gracefulStop
-	log.Infof("Caught signal: %+v", sig)
-	log.Info("Stopping gracefully the application...")
-
-	// Disconnect from MQTT
-	// mqtt.Client.Disconnect(5000)
-	// Stop processing more ZigBee frames
-	close(ZBframeChan)
-	// Stop processing more TCP requests
-	TCPstop <- true
-
-	<-ZBstopped
-	<-TCPstopped
-
-	log.Infoln("Application stopped gracefully")
+	log.Infof("application stopped gracefully: %v", g.Run())
 }

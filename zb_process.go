@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"strings"
@@ -11,28 +12,37 @@ import (
 	"github.com/spf13/viper"
 )
 
-func processZBFrames(fc <-chan xbee.APIFrame, stopped chan<- bool) {
+func processZBFrames(ctx context.Context, fc <-chan xbee.APIFrame) {
 	var err error
 	log.Infof("waiting ZigBee frames: %s", viper.GetString("serial.name"))
-	for f := range fc {
-		switch xbee.ReceiveAPIFrameType(f.Data[0]) {
-		case xbee.TypeReceivePacket:
-			go processReceivePacketFrame(f)
-		case xbee.TypeRemoteATCommandResponse:
-			go processRemoteATCommandResponseFrame(f)
-		case xbee.TypeTransmitStatus:
-			continue
-		default:
-			log.Printf("Unsupported frame type: %X\n", f.Data[0])
+	for {
+		select {
+		case <-ctx.Done():
+			log.Infof("interrupted... no more ZigBee frame to process")
+			return
+		case f, ok := <-fc:
+			if !ok {
+				log.Infof("frame channel closed... stopping processing them")
+				return
+			}
+
+			switch xbee.ReceiveAPIFrameType(f.Data[0]) {
+			case xbee.TypeReceivePacket:
+				go processReceivePacketFrame(f)
+			case xbee.TypeRemoteATCommandResponse:
+				go processRemoteATCommandResponseFrame(f)
+			case xbee.TypeTransmitStatus:
+				continue
+			default:
+				log.Printf("Unsupported frame type: %X\n", f.Data[0])
+			}
+			//log.Debugln(f)
+			if err != nil {
+				log.Errorln(err)
+			}
+			log.Debugf("==============================================================")
 		}
-		//log.Debugln(f)
-		if err != nil {
-			log.Errorln(err)
-		}
-		log.Debugf("==============================================================")
 	}
-	log.Infof("interrupted... no more ZigBee frame to process")
-	stopped <- true
 }
 
 func processReceivePacketFrame(f xbee.APIFrame) error {

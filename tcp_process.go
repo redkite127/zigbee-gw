@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func processTCPrequests(stop <-chan bool, stopped chan<- bool) {
+func processTCPrequests(ctx context.Context) error {
 	server := &http.Server{
 		Addr: ":" + viper.GetString("tcp.port"),
 		// Handler: http.TimeoutHandler(nil, 30*time.Second, "503 Service Unavailable"),
@@ -24,13 +24,14 @@ func processTCPrequests(stop <-chan bool, stopped chan<- bool) {
 		}
 	}()
 
-	<-stop
+	<-ctx.Done()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	server.Shutdown(ctx)
 	log.Infof("interrupted... no more TCP request to process")
-	stopped <- true
+
+	return nil
 }
 
 func requestHandler(w http.ResponseWriter, r *http.Request) {
@@ -58,4 +59,6 @@ func requestHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
+
+	log.Debugf("sent data to '%s': %s", destination, data)
 }
