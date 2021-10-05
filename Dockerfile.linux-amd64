@@ -10,7 +10,7 @@ WORKDIR /usr/local/bin
 COPY --from=builder /go-build/zigbee-gw .
 
 # it does accept the variable $SERVICE
-CMD ["home-hub"]
+CMD ["zigbee-gw"]
 
 # Upload to Docker Hub
 # docker build -f Dockerfile.linux-amd64 -t redkite/zigbee-gw:latest-linux-amd64 .
